@@ -1,48 +1,64 @@
 import { useState } from 'react'
-import { formatCurrency } from '../lib/difal'
 
 interface CaseStudyProps {
   onReviewConcept: () => void
   onGoQuiz: () => void
 }
 
-const steps = [
-  { label: 'A venda', title: 'Uma compra cruza a fronteira estadual.', body: 'Uma empresa fornecedora localizada em São Paulo vende uma mercadoria por R$ 1.000,00 para uma pessoa consumidora final em Rondônia. Neste exercício, a pessoa compradora não é contribuinte do ICMS.', stat: 'SP  →  RO', note: 'Cenário fictício para estudo' },
-  { label: 'Alíquotas do exercício', title: 'Os percentuais são premissas, não dados oficiais.', body: 'Para demonstrar a operação matemática, o exercício adota uma alíquota interestadual hipotética de 12% e uma alíquota interna hipotética de 20% no destino.', stat: '12%  /  20%', note: 'Percentuais hipotéticos' },
-  { label: 'A diferença', title: 'Subtraímos as alíquotas assumidas.', body: 'A alíquota interna hipotética do destino menos a alíquota interestadual hipotética resulta em uma diferença de 8 pontos percentuais.', stat: '20% − 12% = 8 p.p.', note: 'Diferença aritmética do exercício' },
-  { label: 'O cálculo didático', title: 'Aplicamos a diferença à base simplificada.', body: 'A base de cálculo é assumida como R$ 1.000,00 apenas para o exercício: R$ 1.000,00 × 8% resulta em R$ 80,00.', stat: `${formatCurrency(1000)} × 8% = ${formatCurrency(80)}`, note: 'Resultado ilustrativo' },
-  { label: 'Responsabilidade', title: 'Quem recolhe, em regra, neste cenário?', body: 'Como o caso considera consumidor final não contribuinte, o remetente é o responsável geral pelo recolhimento do diferencial, ressalvadas as condições e particularidades jurídicas da operação.', stat: 'REMETENTE', note: 'Regra geral constitucional · verificar o caso concreto' },
-  { label: 'Conclusão', title: 'O resultado depende das premissas adotadas.', body: 'Sob as premissas simplificadas do exercício, o diferencial ilustrativo é R$ 80,00. Esse valor não constitui orientação para recolhimento real.', stat: formatCurrency(80), note: 'Exemplo didático · não fiscal' },
+const pathways = [
+  { id: 'ro-sp', label: 'Rondônia → São Paulo', origin: 'RO', destination: 'SP', interstate: '12%', internal: '18% · alíquota geral paulista', internalState: 'A regra geral consta do art. 34, I, da Lei paulista nº 6.374/1989; pode haver exceção por produto ou operação.', footnote: 'Pela RSF nº 22/1989, a faixa de 7% não corresponde a uma saída da Região Norte para o Sudeste.' },
+  { id: 'sp-ro', label: 'São Paulo → Rondônia', origin: 'SP', destination: 'RO', interstate: '7%', internal: '19,5% · alíquota modal residual de RO', internalState: 'O RICMS/RO prevê 19,5% nos demais casos desde 12/01/2024; é necessário verificar se o produto tem alíquota específica, benefício ou FECOEP.', footnote: 'A aplicação da faixa regional depende da origem Sul/Sudeste e destino Norte, Nordeste, Centro-Oeste ou ES.' },
+  { id: 'sp-pa', label: 'São Paulo → Pará', origin: 'SP', destination: 'PA', interstate: '7%', internal: 'Não verificada nesta auditoria', internalState: 'A alíquota interna do Pará, o tratamento do produto e eventuais adicionais precisam ser conferidos na legislação estadual vigente para a data da operação.', footnote: 'O Pará é um destino da Região Norte. A regra de 7% decorre da trajetória prevista na RSF nº 22/1989, sob as condições anotadas.' },
+  { id: 'pr-ro', label: 'Paraná → Rondônia', origin: 'PR', destination: 'RO', interstate: '7%', internal: '19,5% · alíquota modal residual de RO', internalState: 'O RICMS/RO prevê 19,5% nos demais casos desde 12/01/2024; produto, benefícios e FECOEP continuam pendentes de identificação.', footnote: 'Paraná integra a Região Sul; Rondônia integra a Região Norte.' },
+]
+
+const workflow = [
+  'Identifique remetente, destinatário e a operação documentada.',
+  'Confirme a condição do destinatário perante o ICMS.',
+  'Determine a finalidade e a classificação fiscal da mercadoria.',
+  'Confira origem e destino fiscais, incluindo eventual destino físico diferente.',
+  'Fixe a data da operação para consultar a regra vigente naquele dia.',
+  'Determine a base legal e seus componentes; não presuma que o total da nota é a base.',
+  'Valide alíquotas interna e interestadual, importação, exceções e benefícios.',
+  'Aplique somente a metodologia de cálculo prevista para aquela hipótese.',
+  'Apure DIFAL e FCP separadamente, quando efetivamente incidentes.',
+  'Confirme responsável, cadastro, prazo, guia e procedimento nos portais fiscais competentes.',
 ]
 
 export function CaseStudy({ onReviewConcept, onGoQuiz }: CaseStudyProps) {
-  const [step, setStep] = useState(0)
-  const isSummary = step === steps.length
-  const current = steps[Math.min(step, steps.length - 1)]!
-
-  const restart = () => setStep(0)
+  const [selected, setSelected] = useState(pathways[1]!.id)
+  const current = pathways.find((path) => path.id === selected) ?? pathways[1]!
 
   return (
-    <div className="case-study">
-      <div className="case-study__topline"><span>CASO DIDÁTICO · SP → RO</span><span>{isSummary ? 'RESUMO' : `ETAPA ${step + 1} DE ${steps.length}`}</span></div>
-      <div className="case-study__progress" role="progressbar" aria-label="Progresso do estudo de caso" aria-valuemin={0} aria-valuemax={steps.length} aria-valuenow={isSummary ? steps.length : step + 1}><span style={{ width: `${(isSummary ? steps.length : step + 1) / steps.length * 100}%` }} /></div>
-      {!isSummary ? <div className="case-stage" key={step}>
-        <div className="case-stage__copy"><span className="case-stage__number">0{step + 1}</span><span className="eyebrow">{current.label}</span><h3>{current.title}</h3><p>{current.body}</p></div>
-        <div className="case-stage__figure"><span className="case-stage__stat">{current.stat}</span><span className="case-stage__note">{current.note}</span>{step === 0 && <div className="case-route" aria-label="Rota do fornecedor em São Paulo até o consumidor em Rondônia"><span>São Paulo<small>origem</small></span><i aria-hidden="true" /><span>Rondônia<small>destino</small></span></div>}{step === 2 && <div className="difference-equation"><span>20%<small>interna hipotética</small></span><b>−</b><span>12%<small>interestadual hipotética</small></span><strong>8 p.p.</strong></div>}</div>
-      </div> : <div className="case-summary" key="summary">
-        <span className="eyebrow">SÍNTESE DO EXERCÍCIO</span><h3>O que aprendemos neste cenário?</h3>
-        <dl className="case-summary__grid">
-          <div><dt>Contexto</dt><dd>Venda interestadual fictícia de SP para RO, destinada a consumidor final não contribuinte.</dd></div>
-          <div><dt>Dados utilizados</dt><dd>Valor assumido de R$ 1.000,00; alíquota interestadual hipotética de 12%; alíquota interna hipotética de 20%.</dd></div>
-          <div><dt>Fórmula didática</dt><dd>Base assumida × (alíquota interna − alíquota interestadual).</dd></div>
-          <div><dt>Resultado ilustrativo</dt><dd>8 pontos percentuais de diferença; R$ 80,00 sob as premissas simplificadas do exercício.</dd></div>
-          <div><dt>Responsabilidade geral</dt><dd>Remetente, pois o destinatário foi descrito como não contribuinte, observadas as normas aplicáveis.</dd></div>
-          <div><dt>Limitações</dt><dd>O resultado não é orientação de recolhimento real. Alíquotas, base e procedimentos precisam ser verificados para cada operação.</dd></div>
-        </dl>
-        <button className="text-button case-study__restart" type="button" onClick={restart}>Rever as etapas <span aria-hidden="true">↻</span></button>
-      </div>}
-      <div className="case-study__controls"><button className="button button--outline" type="button" disabled={step === 0} onClick={() => setStep((currentStep) => Math.max(0, currentStep - 1))}>← Anterior</button>{!isSummary && <button className="button button--primary" type="button" onClick={() => setStep((currentStep) => Math.min(steps.length, currentStep + 1))}>{step === steps.length - 1 ? 'Ver resumo' : 'Próxima etapa'} <span aria-hidden="true">→</span></button>}</div>
-      {isSummary && <div className="case-study__final-actions"><button className="text-button" type="button" onClick={onReviewConcept}>Revisar o conceito <span aria-hidden="true">↑</span></button><button className="button button--primary" type="button" onClick={onGoQuiz}>Ir para o quiz <span aria-hidden="true">→</span></button></div>}
+    <div className="case-study case-study--audit">
+      <div className="case-study__topline"><span>CASOS DE REFERÊNCIA · MERCADORIA NACIONAL A CONFIRMAR</span><span>CONSULTA NORMATIVA · 17/10/2026</span></div>
+      <div className="case-audit__notice"><strong>Sem valor de recolhimento demonstrado</strong><p>As trajetórias abaixo permitem conferir a regra federal de referência para a alíquota interestadual. Não foram fornecidos data fiscal concreta, NCM, documentos, composição da base ou evidências sobre benefícios. Por isso, não há fórmula nem resultado numérico de DIFAL.</p></div>
+      <div className="case-audit__layout">
+        <div className="case-audit__routes" role="group" aria-label="Selecione uma trajetória para ver as regras de referência">
+          {pathways.map((path, index) => <button className={selected === path.id ? 'is-selected' : ''} type="button" aria-pressed={selected === path.id} key={path.id} onClick={() => setSelected(path.id)}><span>0{index + 1}</span><strong>{path.label}</strong><i aria-hidden="true">→</i></button>)}
+        </div>
+        <article className="case-audit__detail" aria-live="polite">
+          <span className="eyebrow">TRAJETÓRIA {current.origin} → {current.destination}</span>
+          <h3>{current.label}</h3>
+          <dl>
+            <div><dt>Tipo considerado</dt><dd>Venda interestadual de mercadoria para consumidor final não contribuinte; cenário didático, ainda sem classificação do produto.</dd></div>
+            <div><dt>Data de referência jurídica</dt><dd>17/10/2026, data desta consulta. A data efetiva da operação deve ser informada antes de selecionar a legislação aplicável.</dd></div>
+            <div><dt>Alíquota interestadual de referência</dt><dd><strong>{current.interstate}</strong> pela regra regional ou geral da Resolução do Senado nº 22/1989, se mercadoria nacional e sem exceção.</dd></div>
+            <div><dt>Alíquota interna no destino</dt><dd>{current.internal}. {current.internalState}</dd></div>
+            <div><dt>Base, fórmula e resultado</dt><dd>Não determinados. Faltam NCM, data da operação, valor fiscal e componentes da base; a LC nº 190/2022 alterou regras de base para hipóteses do DIFAL.</dd></div>
+            <div><dt>FCP e recolhimento</dt><dd>Não calculados. Para consumidor final não contribuinte, a regra geral constitucional atribui responsabilidade ao remetente, sujeita às normas da operação; o FECOEP/RO incide apenas nas hipóteses e produtos previstos.</dd></div>
+          </dl>
+          <p className="case-audit__footnote">{current.footnote} Se a mercadoria for importada ou atender aos critérios da Resolução nº 13/2012, a referência interestadual pode ser 4%, observadas suas exceções.</p>
+          <a href="https://legis.senado.leg.br/norma/586152/publicacao/15646891" target="_blank" rel="noreferrer">Resolução nº 22/1989 · abrir fonte oficial <span aria-hidden="true">↗</span></a>
+        </article>
+      </div>
+
+      <section className="case-audit__workflow" aria-labelledby="case-workflow-title">
+        <span className="eyebrow">DO PEDIDO À OBRIGAÇÃO</span><h3 id="case-workflow-title">Dez verificações antes de recolher.</h3>
+        <ol>{workflow.map((item, index) => <li key={item}><span>{String(index + 1).padStart(2, '0')}</span><p>{item}</p></li>)}</ol>
+      </section>
+      <p className="case-study__disclaimer">As alíquotas são referências normativas gerais, não valores finais de apuração. Mercadorias sujeitas a alíquotas específicas, substituição tributária, isenção, redução de base, benefícios fiscais, regimes especiais ou FCP exigem análise própria. Consulte a legislação e os portais oficiais de origem e destino.</p>
+      <div className="case-study__final-actions"><button className="text-button" type="button" onClick={onReviewConcept}>Revisar o conceito <span aria-hidden="true">↑</span></button><button className="button button--primary" type="button" onClick={onGoQuiz}>Ir para o quiz <span aria-hidden="true">→</span></button></div>
     </div>
   )
 }

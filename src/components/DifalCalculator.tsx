@@ -1,118 +1,171 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
-import { calculateIllustrativeDifal, formatCurrency, formatRate, type RecipientKind } from '../lib/difal'
+import { useMemo, useState, type FormEvent } from 'react'
+import { TAX_RULES, type BrazilianStateCode } from '../data/taxRules'
+import {
+  evaluateTaxScenario,
+  parseCurrencyToCents,
+  type AcquisitionPurpose,
+  type GoodsOrigin,
+  type RecipientStatus,
+  type ScenarioKind,
+  type SpecialTreatment,
+  type TaxRegime,
+} from '../lib/taxEngine'
 
-const example = { value: '1000', interstate: '12', destination: '20' }
-const currencyInput = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 2 })
+const states: Array<[BrazilianStateCode, string]> = [
+  ['AC', 'Acre'], ['AL', 'Alagoas'], ['AP', 'Amapá'], ['AM', 'Amazonas'], ['BA', 'Bahia'], ['CE', 'Ceará'],
+  ['DF', 'Distrito Federal'], ['ES', 'Espírito Santo'], ['GO', 'Goiás'], ['MA', 'Maranhão'], ['MT', 'Mato Grosso'],
+  ['MS', 'Mato Grosso do Sul'], ['MG', 'Minas Gerais'], ['PA', 'Pará'], ['PB', 'Paraíba'], ['PR', 'Paraná'],
+  ['PE', 'Pernambuco'], ['PI', 'Piauí'], ['RJ', 'Rio de Janeiro'], ['RN', 'Rio Grande do Norte'], ['RS', 'Rio Grande do Sul'],
+  ['RO', 'Rondônia'], ['RR', 'Roraima'], ['SC', 'Santa Catarina'], ['SP', 'São Paulo'], ['SE', 'Sergipe'], ['TO', 'Tocantins'],
+]
+
+const stateName = (code: string) => states.find(([state]) => state === code)?.[1] ?? code
+const dateChecked = '17/10/2026'
 
 export function DifalCalculator() {
-  const [value, setValue] = useState(example.value)
-  const [isValueFocused, setIsValueFocused] = useState(false)
-  const valueInputRef = useRef<HTMLInputElement>(null)
-  const [interstateRate, setInterstateRate] = useState(example.interstate)
-  const [destinationRate, setDestinationRate] = useState(example.destination)
-  const [recipient, setRecipient] = useState<RecipientKind>('nonTaxpayer')
-  const [showSteps, setShowSteps] = useState(false)
+  const [scenario, setScenario] = useState<ScenarioKind>('final-consumer-sale')
+  const [origin, setOrigin] = useState<BrazilianStateCode | ''>('SP')
+  const [destination, setDestination] = useState<BrazilianStateCode | ''>('RO')
+  const [operationDate, setOperationDate] = useState('')
+  const [recipient, setRecipient] = useState<RecipientStatus>('unknown')
+  const [purpose, setPurpose] = useState<AcquisitionPurpose>('not-applicable')
+  const [goodsOrigin, setGoodsOrigin] = useState<GoodsOrigin>('unknown')
+  const [specialTreatment, setSpecialTreatment] = useState<SpecialTreatment>('unknown')
+  const [taxRegime, setTaxRegime] = useState<TaxRegime>('unknown')
+  const [ncm, setNcm] = useState('')
+  const [amounts, setAmounts] = useState({ products: '', freight: '', insurance: '', accessories: '', ipi: '', discount: '' })
+  const [wasSubmitted, setWasSubmitted] = useState(false)
+  const [copyFeedback, setCopyFeedback] = useState('')
 
-  const parsed = useMemo(() => {
-    const normalizedValue = value.trim().replace(/\s|R\$/g, '')
-    const hasBrazilianDecimal = normalizedValue.includes(',')
-    const isBrazilianGroupedInteger = /^\d{1,3}(\.\d{3})+$/.test(normalizedValue)
-    const operationValue = Number(hasBrazilianDecimal
-      ? normalizedValue.replace(/\./g, '').replace(',', '.')
-      : isBrazilianGroupedInteger ? normalizedValue.replace(/\./g, '') : normalizedValue)
-    const interstate = Number(interstateRate)
-    const destination = Number(destinationRate)
-    const validValue = value.trim() !== '' && Number.isFinite(operationValue) && operationValue > 0 && operationValue <= 2_000_000
-    const validInterstate = interstateRate.trim() !== '' && Number.isFinite(interstate) && interstate >= 0 && interstate <= 40
-    const validDestination = destinationRate.trim() !== '' && Number.isFinite(destination) && destination >= 0 && destination <= 40
-
-    return {
-      operationValue,
-      interstate,
+  const result = useMemo(() => {
+    if (!wasSubmitted) return null
+    return evaluateTaxScenario({
+      scenario,
+      origin,
       destination,
-      validValue,
-      validInterstate,
-      validDestination,
-      valid: validValue && validInterstate && validDestination,
-    }
-  }, [value, interstateRate, destinationRate])
+      operationDate,
+      productClassification: ncm,
+      recipient,
+      purpose,
+      goodsOrigin,
+      specialTreatment,
+      taxRegime,
+      invalidMoneyFields: Object.entries(amounts)
+        .filter(([, raw]) => raw.trim() !== '' && parseCurrencyToCents(raw) === null)
+        .map(([key]) => ({ products: 'produtos', freight: 'frete', insurance: 'seguro', accessories: 'despesas acessórias', ipi: 'IPI', discount: 'desconto incondicional' })[key as keyof typeof amounts] ?? key),
+      productValueCents: parseCurrencyToCents(amounts.products),
+      freightCents: amounts.freight.trim() ? parseCurrencyToCents(amounts.freight) : null,
+      insuranceCents: amounts.insurance.trim() ? parseCurrencyToCents(amounts.insurance) : null,
+      accessoryExpensesCents: amounts.accessories.trim() ? parseCurrencyToCents(amounts.accessories) : null,
+      ipiCents: amounts.ipi.trim() ? parseCurrencyToCents(amounts.ipi) : null,
+      unconditionalDiscountCents: amounts.discount.trim() ? parseCurrencyToCents(amounts.discount) : null,
+    })
+  }, [amounts, destination, goodsOrigin, ncm, operationDate, origin, purpose, recipient, scenario, specialTreatment, taxRegime, wasSubmitted])
 
-  const result = parsed.valid
-    ? calculateIllustrativeDifal({ operationValue: parsed.operationValue, interstateRate: parsed.interstate, destinationRate: parsed.destination })
-    : null
-  const hasNegativeDifference = result !== null && result.rateDifference < 0
-  const amount = result?.illustrativeAmount
-  const sliderValue = Number.isFinite(parsed.operationValue) ? Math.min(2_000_000, Math.max(0, parsed.operationValue)) : 0
-  const displayValue = !isValueFocused && parsed.validValue ? currencyInput.format(parsed.operationValue).replace(/^R\$\s?/, '') : value
-
-  useEffect(() => {
-    if (isValueFocused) valueInputRef.current?.select()
-  }, [isValueFocused])
-  const restoreExample = () => {
-    setValue(example.value)
-    setInterstateRate(example.interstate)
-    setDestinationRate(example.destination)
+  const submit = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault()
+    setWasSubmitted(true)
+    setCopyFeedback('')
   }
 
+  const reset = () => {
+    setScenario('final-consumer-sale')
+    setOrigin('SP')
+    setDestination('RO')
+    setOperationDate('')
+    setRecipient('unknown')
+    setPurpose('not-applicable')
+    setGoodsOrigin('unknown')
+    setSpecialTreatment('unknown')
+    setTaxRegime('unknown')
+    setNcm('')
+    setAmounts({ products: '', freight: '', insurance: '', accessories: '', ipi: '', discount: '' })
+    setWasSubmitted(false)
+    setCopyFeedback('')
+  }
+
+  const copyReport = async () => {
+    if (!result) return
+    const text = [
+      result.title,
+      `Operação: ${stateName(origin)} (${origin}) → ${stateName(destination)} (${destination})`,
+      `Data informada: ${operationDate || 'não informada'}`,
+      `Conclusão: ${result.reason}`,
+      `Referência interestadual: ${result.interstateReference?.rate ?? 'não determinada'} — ${result.interstateReference?.note ?? ''}`,
+      ...result.alerts.map((alert) => `Alerta: ${alert}`),
+      'Nenhum valor de DIFAL ou FCP foi calculado.',
+      'Ferramenta educacional; confirme a legislação, os documentos fiscais e a administração tributária competente.',
+    ].join('\n')
+    try {
+      await navigator.clipboard.writeText(text)
+      setCopyFeedback('Demonstrativo copiado.')
+    } catch {
+      setCopyFeedback('Não foi possível copiar automaticamente. Selecione o texto do demonstrativo.')
+    }
+  }
+
+  const identifiedRuleIds = result?.sourceRuleIds ?? []
+  const identifiedRules = TAX_RULES.filter((rule) => identifiedRuleIds.includes(rule.id))
+
   return (
-    <div className="calculator" aria-label="Calculadora didática ilustrativa">
-      <div className="calculator__inputs">
-        <div className="calculator__topline"><span className="eyebrow">SIMULAÇÃO DIDÁTICA</span><span className="calculator__limits">Limites dos campos: 0–40% · até R$ 2.000.000</span></div>
-        <div className="field field--wide">
-          <span>Valor assumido da operação</span>
-          <span className="field__unit">R$</span>
-          <input ref={valueInputRef} id="operation-value" inputMode="decimal" type="text" autoComplete="off" value={displayValue} onFocus={() => setIsValueFocused(true)} onBlur={() => setIsValueFocused(false)} onChange={(event) => setValue(event.target.value)} aria-label="Valor assumido da operação em reais" aria-invalid={!parsed.validValue} aria-describedby="value-hint value-error" />
-          <small id="value-hint">Hipótese simplificada de base de cálculo.</small>
-          <input className="range-control range-control--amount" aria-label="Ajustar valor assumido da operação em passos de R$ 1.000" type="range" min="0" max="2000000" step="1000" value={sliderValue} onChange={(event) => setValue(event.target.value)} />
-          {!parsed.validValue && <small className="field__error" id="value-error" role="alert">Informe um valor maior que zero e até R$ 2.000.000.</small>}
-        </div>
-        <div className="rate-fields">
-          <label className="field" htmlFor="interstate-rate">
-            <span>Alíquota interestadual</span>
-            <span className="field__control"><input id="interstate-rate" type="number" min="0" max="40" step="0.01" value={interstateRate} onChange={(event) => setInterstateRate(event.target.value)} aria-describedby="interstate-error" /><span>%</span></span>
-            <input className="range-control" aria-label="Ajustar alíquota interestadual" type="range" min="0" max="40" step="0.5" value={parsed.validInterstate ? parsed.interstate : 0} onChange={(event) => setInterstateRate(event.target.value)} />
-            {!parsed.validInterstate && <small className="field__error" id="interstate-error" role="alert">Use uma alíquota entre 0% e 40%.</small>}
-          </label>
-          <label className="field" htmlFor="destination-rate">
-            <span>Alíquota interna hipotética do destino</span>
-            <span className="field__control"><input id="destination-rate" type="number" min="0" max="40" step="0.01" value={destinationRate} onChange={(event) => setDestinationRate(event.target.value)} aria-describedby="destination-error" /><span>%</span></span>
-            <input className="range-control" aria-label="Ajustar alíquota interna hipotética do destino" type="range" min="0" max="40" step="0.5" value={parsed.validDestination ? parsed.destination : 0} onChange={(event) => setDestinationRate(event.target.value)} />
-            {!parsed.validDestination && <small className="field__error" id="destination-error" role="alert">Use uma alíquota entre 0% e 40%.</small>}
-          </label>
-        </div>
-        <label className="field field--select" htmlFor="recipient-kind">
-          <span>Condição do destinatário</span>
-          <select id="recipient-kind" value={recipient} onChange={(event) => setRecipient(event.target.value as RecipientKind)}>
-            <option value="taxpayer">Consumidor final contribuinte</option>
-            <option value="nonTaxpayer">Consumidor final não contribuinte</option>
-          </select>
-          <small>Usada para contextualizar a responsabilidade geral, não altera a fórmula simplificada.</small>
-        </label>
-        <div className="calculator__actions">
-          <button className="button button--outline" type="button" onClick={restoreExample}>Restaurar exemplo</button>
-          <button className="text-button" type="button" aria-expanded={showSteps} aria-controls="calculation-steps" onClick={() => setShowSteps((current) => !current)}>{showSteps ? 'Ocultar etapas' : 'Ver cálculo passo a passo'} <span aria-hidden="true">{showSteps ? '−' : '+'}</span></button>
-        </div>
+    <div className="tax-calculator" aria-label="Triagem educacional de operação sujeita a possível DIFAL">
+      <div className="tax-calculator__intro">
+        <div><span className="eyebrow">TRIAGEM TRIBUTÁRIA · REGRAS VERIFICADAS EM {dateChecked}</span><h3>Comece pela operação.</h3><p>Os dados ajudam a identificar as regras que precisam ser conferidas. O motor só calcula quando houver uma regra validada para a mercadoria, a data e a operação.</p></div>
+        <span className="tax-calculator__badge"><i />Sem apuração automática<br />neste momento</span>
       </div>
-      <div className="calculator__result">
-        <div className="calculator__result-meta"><span>DIFERENÇA ILUSTRATIVA</span><span className="status-dot" />{result && !hasNegativeDifference ? `${formatRate(result.rateDifference)} · ${result.rateDifference.toLocaleString('pt-BR')} p.p.` : 'Aguardando valores válidos'}</div>
-        <div className="rate-compare" aria-label={parsed.valid ? `Alíquota interestadual ${formatRate(parsed.interstate)} e interna ${formatRate(parsed.destination)}` : 'Preencha alíquotas válidas'}>
-          <div className="rate-compare__row"><span>Interestadual</span><strong>{parsed.validInterstate ? formatRate(parsed.interstate) : '—'}</strong><i style={{ width: `${parsed.validInterstate ? parsed.interstate / 40 * 100 : 0}%` }} /></div>
-          <div className="rate-compare__row rate-compare__row--destination"><span>Interna do destino</span><strong>{parsed.validDestination ? formatRate(parsed.destination) : '—'}</strong><i style={{ width: `${parsed.validDestination ? parsed.destination / 40 * 100 : 0}%` }} /></div>
-        </div>
-        <p className="result-equation">Base assumida × (alíquota interna − interestadual)</p>
-        <output className={`result-amount${hasNegativeDifference ? ' result-amount--muted' : ''}`} aria-live="polite">{!parsed.valid ? '—' : hasNegativeDifference ? 'Sem resultado' : formatCurrency(amount ?? 0)}</output>
-        <p className="result-caption">{!parsed.valid ? 'Corrija os campos indicados para atualizar a simulação.' : hasNegativeDifference ? 'Diferença negativa. A simulação não indica DIFAL devido.' : 'Resultado ilustrativo; não é valor fiscal definitivo.'}</p>
-        <div className="responsibility-chip"><span>RESPONSABILIDADE GERAL</span><strong>{recipient === 'taxpayer' ? 'Destinatário contribuinte' : 'Remetente'}</strong><small>Observe a legislação e as condições da operação.</small></div>
-      </div>
-      {showSteps && <ol className="calculation-steps" id="calculation-steps">
-        <li><span>01</span><p>Base hipotética usada: <strong>{parsed.validValue ? currencyInput.format(parsed.operationValue) : 'valor inválido'}</strong>.</p></li>
-        <li><span>02</span><p>Alíquota interestadual: <strong>{parsed.validInterstate ? formatRate(parsed.interstate) : 'inválida'}</strong>.</p></li>
-        <li><span>03</span><p>Alíquota interna hipotética de destino: <strong>{parsed.validDestination ? formatRate(parsed.destination) : 'inválida'}</strong>.</p></li>
-        <li><span>04</span><p>Diferença entre as alíquotas: <strong>{result ? `${formatRate(result.rateDifference)} (${result.rateDifference.toLocaleString('pt-BR')} p.p.)` : 'indisponível'}</strong>.</p></li>
-        <li><span>05</span><p>Aplicação ilustrativa: <strong>{result && !hasNegativeDifference ? `${currencyInput.format(parsed.operationValue)} × ${formatRate(result.rateDifference)}` : 'não aplicável'}</strong>.</p></li>
-        <li><span>06</span><p>Resultado didático: <strong>{amount !== null && amount !== undefined ? formatCurrency(amount) : 'sem resultado válido'}</strong>.</p></li>
-      </ol>}
-      <p className="calculator__disclaimer">A apuração real pode depender da base legal, de componentes da operação, da legislação do destino, de benefícios, adicionais e outros fatores. Esta fórmula não substitui o cálculo fiscal aplicável ao caso concreto.</p>
+
+      <form onSubmit={submit} className="tax-form">
+        <section className="tax-form__step" aria-labelledby="tax-step-operation">
+          <div className="tax-form__step-heading"><span>01</span><div><h4 id="tax-step-operation">Identifique a operação</h4><p>Escolha o cenário e indique a origem, o destino e a data da saída ou entrada.</p></div></div>
+          <fieldset className="tax-form__scenario"><legend>Tipo de operação</legend>
+            <label className={scenario === 'final-consumer-sale' ? 'is-selected' : ''}><input type="radio" name="scenario" value="final-consumer-sale" checked={scenario === 'final-consumer-sale'} onChange={() => { setScenario('final-consumer-sale'); setPurpose('not-applicable'); setWasSubmitted(false) }} /><span><strong>Venda a consumidor final</strong><small>Operação interestadual destinada a consumidor final.</small></span></label>
+            <label className={scenario === 'taxpayer-acquisition' ? 'is-selected' : ''}><input type="radio" name="scenario" value="taxpayer-acquisition" checked={scenario === 'taxpayer-acquisition'} onChange={() => { setScenario('taxpayer-acquisition'); setRecipient('taxpayer'); setPurpose('use-consumption'); setWasSubmitted(false) }} /><span><strong>Aquisição por contribuinte</strong><small>Informe a finalidade para verificar a hipótese aplicável.</small></span></label>
+          </fieldset>
+          <div className="tax-form__grid">
+            <label className="tax-field"><span>Estado de origem</span><select value={origin} onChange={(event) => { setOrigin(event.target.value as BrazilianStateCode); setWasSubmitted(false) }} required>{states.map(([code, name]) => <option key={code} value={code}>{name} ({code})</option>)}</select></label>
+            <label className="tax-field"><span>Estado de destino</span><select value={destination} onChange={(event) => { setDestination(event.target.value as BrazilianStateCode); setWasSubmitted(false) }} required>{states.map(([code, name]) => <option key={code} value={code}>{name} ({code})</option>)}</select></label>
+            <label className="tax-field"><span>Data da operação</span><input type="date" value={operationDate} max="2026-10-17" onChange={(event) => { setOperationDate(event.target.value); setWasSubmitted(false) }} required /><small>A seleção temporal usa a data da operação. Base consultada em 17/10/2026.</small></label>
+            <label className="tax-field"><span>Origem da mercadoria</span><select value={goodsOrigin} onChange={(event) => { setGoodsOrigin(event.target.value as GoodsOrigin); setWasSubmitted(false) }}><option value="unknown">Não verificada</option><option value="domestic">Nacional confirmada</option><option value="imported">Importada ou com conteúdo de importação</option></select><small>Mercadoria importada pode estar sujeita à Resolução do Senado nº 13/2012.</small></label>
+          </div>
+        </section>
+
+        <section className="tax-form__step" aria-labelledby="tax-step-status">
+          <div className="tax-form__step-heading"><span>02</span><div><h4 id="tax-step-status">Informe a condição fiscal</h4><p>Os campos variam conforme o cenário selecionado.</p></div></div>
+          {scenario === 'final-consumer-sale' ? <div className="tax-form__grid tax-form__grid--two">
+            <label className="tax-field"><span>Consumidor final</span><select value={recipient} onChange={(event) => { setRecipient(event.target.value as RecipientStatus); setWasSubmitted(false) }}><option value="unknown">Ainda não identificado</option><option value="taxpayer">Contribuinte do ICMS</option><option value="non-taxpayer">Não contribuinte do ICMS</option></select></label>
+            <p className="tax-help">A Constituição prevê responsáveis distintos conforme a condição do destinatário. Isso não determina, sozinho, a base, o valor nem os prazos de recolhimento.</p>
+          </div> : <div className="tax-form__grid tax-form__grid--two">
+            <label className="tax-field"><span>Finalidade da aquisição</span><select value={purpose} onChange={(event) => { setPurpose(event.target.value as AcquisitionPurpose); setWasSubmitted(false) }}><option value="not-applicable">Selecione</option><option value="use-consumption">Uso ou consumo</option><option value="fixed-assets">Ativo imobilizado</option><option value="resale">Revenda</option><option value="industrialization">Industrialização</option><option value="other">Outra finalidade</option></select></label>
+            <p className="tax-help">Uso/consumo e ativo imobilizado têm previsão específica na LC nº 87/1996; revenda e industrialização exigem outra análise e não recebem DIFAL automaticamente nesta ferramenta.</p>
+          </div>}
+          <div className="tax-form__grid tax-form__grid--three tax-form__grid--metadata">
+            <label className="tax-field"><span>NCM ou descrição fiscal</span><input type="text" inputMode="numeric" value={ncm} onChange={(event) => { setNcm(event.target.value); setWasSubmitted(false) }} placeholder="Ex.: código NCM ou descrição do item" /><small>A classificação é necessária para confirmar alíquotas específicas, benefícios, ST e FECOEP.</small></label>
+            <label className="tax-field"><span>Regime, benefício ou tratamento especial</span><select value={specialTreatment} onChange={(event) => { setSpecialTreatment(event.target.value as SpecialTreatment); setWasSubmitted(false) }}><option value="unknown">Não verificado</option><option value="none-declared">Sem tratamento especial confirmado</option><option value="present">Há benefício, ST, isenção, redução ou regime especial</option></select><small>O app não verifica automaticamente cadastros, convênios, regimes ou benefícios estaduais.</small></label>
+            <label className="tax-field"><span>Regime de apuração do ICMS</span><select value={taxRegime} onChange={(event) => { setTaxRegime(event.target.value as TaxRegime); setWasSubmitted(false) }}><option value="unknown">Não identificado</option><option value="normal">Regime normal</option><option value="simples">Simples Nacional</option><option value="special">Regime especial ou outro</option></select><small>O enquadramento pode alterar regras, obrigações e elegibilidade.</small></label>
+          </div>
+        </section>
+
+        <section className="tax-form__step" aria-labelledby="tax-step-values">
+          <div className="tax-form__step-heading"><span>03</span><div><h4 id="tax-step-values">Registre os valores disponíveis</h4><p>Informe parcelas separadas, quando conhecidas. Elas não serão somadas automaticamente à base de cálculo.</p></div></div>
+          <div className="tax-form__grid tax-form__grid--three">
+            {([['products', 'Valor dos produtos', true], ['freight', 'Frete', false], ['insurance', 'Seguro', false], ['accessories', 'Despesas acessórias', false], ['ipi', 'IPI', false], ['discount', 'Desconto incondicional', false]] as const).map(([key, label, required]) => <label className="tax-field" key={key}><span>{label}{required ? ' *' : ''}</span><div className="tax-field__currency"><b>R$</b><input type="text" inputMode="decimal" value={amounts[key]} onChange={(event) => { setAmounts((current) => ({ ...current, [key]: event.target.value })); setWasSubmitted(false) }} placeholder="0,00" required={required} aria-label={label} /></div></label>)}
+          </div>
+          <p className="tax-help tax-help--wide">Não informe a mesma parcela duas vezes. A base pode variar conforme a hipótese legal; o campo “Valor dos produtos” não é presumido como base tributável.</p>
+        </section>
+
+        <div className="tax-form__actions"><button className="button button--primary" type="submit">Analisar cenário <span aria-hidden="true">→</span></button><button className="button button--outline" type="button" onClick={reset}>Limpar dados</button></div>
+      </form>
+
+      {result && <section className={`tax-result tax-result--${result.status}`} aria-live="polite" aria-labelledby="tax-result-title">
+        <div className="tax-result__header"><span className="eyebrow">RESULTADO DA TRIAGEM · {origin} → {destination}</span><h3 id="tax-result-title">{result.title}</h3><p>{result.reason}</p></div>
+        {result.interstateReference && <div className="tax-result__reference"><span>Referência de alíquota interestadual</span><strong>{result.interstateReference.rate ?? 'Pendente de validação'}</strong><p>{result.interstateReference.note}</p>{result.interstateReference.rule && <a href={result.interstateReference.rule.sourceUrl} target="_blank" rel="noreferrer">{result.interstateReference.rule.sourceTitle} · {result.interstateReference.rule.provision}</a>}</div>}
+        <div className="tax-result__no-calculation"><strong>DIFAL e FCP: não calculados</strong><span>Este resultado é uma triagem, não um valor para recolhimento.</span></div>
+        <ul className="tax-result__alerts">{result.alerts.map((alert) => <li key={alert}>{alert}</li>)}</ul>
+        {identifiedRules.length > 0 && <details className="tax-result__rules"><summary>Ver regras consultadas e status</summary><div>{identifiedRules.map((rule) => <article key={rule.id}><strong>{rule.id} · {rule.status === 'validated' ? 'validada no escopo descrito' : rule.status === 'pending' ? 'pendente' : rule.status === 'expired' ? 'vencida' : 'não suportada'}</strong><p>{rule.sourceTitle} · {rule.provision} · vigência a partir de {rule.effectiveFrom}{rule.effectiveTo ? ` até ${rule.effectiveTo}` : ''}. Consultada em {dateChecked}.</p><a href={rule.sourceUrl} target="_blank" rel="noreferrer">Abrir fonte oficial</a></article>)}</div></details>}
+        <div className="tax-result__actions"><button className="button button--outline" type="button" onClick={() => window.print()}>Imprimir demonstrativo</button><button className="text-button" type="button" onClick={copyReport}>Copiar resumo <span aria-hidden="true">↗</span></button><span role="status">{copyFeedback}</span></div>
+      </section>}
+
+      <p className="tax-calculator__disclaimer">Ferramenta educacional e informativa. Não substitui a conferência da legislação vigente na data da operação, dos documentos fiscais nem das orientações da administração tributária competente. A base normativa é revisada manualmente; não existe atualização automática.</p>
     </div>
   )
 }
