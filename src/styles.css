@@ -78,12 +78,23 @@ h1, h2, h3, h4, p { margin-top: 0; }
 
 .route-visual { position: relative; width: 100%; color: #346082; }
 .route-map { display: block; width: 100%; max-height: 460px; overflow: visible; }
-.map-shape { fill: rgba(16, 44, 76, .45); stroke: rgba(87, 169, 218, .4); stroke-width: 1.2; }
-.map-grid { fill: url(#map-dots); stroke: rgba(87, 169, 218, .1); stroke-width: 1; }
-.route-track { fill: none; stroke: rgba(99,217,232,.38); stroke-width: 2; stroke-dasharray: 7 10; }
-.route-track.is-active { stroke: url(#route-line); stroke-dasharray: 6 9; animation: route-dash 24s linear infinite; }
-.route-node { fill: var(--navy); stroke: #63d9e8; stroke-width: 3; filter: drop-shadow(0 0 8px rgba(99,217,232,.5)); }
+.route-direction-control { display: flex; justify-content: flex-end; gap: 5px; margin: 0 0 4px; }
+.route-direction-control button { min-height: 32px; padding: 0 11px; color: #aab8ce; background: rgba(255,255,255,.035); border: 1px solid rgba(255,255,255,.15); border-radius: 3px; cursor: pointer; font-size: 9px; font-weight: 800; letter-spacing: .07em; transition: color .2s ease, background .2s ease, border-color .2s ease; }
+.route-direction-control button:hover, .route-direction-control button[aria-pressed="true"] { color: #071426; background: var(--cyan); border-color: var(--cyan); }
+.route-direction-control button span { margin-inline: 4px; }
+.route-map__status { display: grid; min-height: 230px; place-items: center; color: #9bacbf; font-size: 10px; text-align: center; }
+.brazil-state { fill: rgba(111,145,179,.16); stroke: rgba(153,188,216,.5); stroke-width: 1.15; stroke-linejoin: round; vector-effect: non-scaling-stroke; }
+.brazil-state--ro { fill: rgba(99,217,232,.58); stroke: #9af1f7; }
+.brazil-state--sp { fill: rgba(91,140,255,.62); stroke: #b5caff; }
+.route-track { fill: none; stroke: rgba(99,217,232,.38); stroke-width: 2; stroke-dasharray: 7 10; vector-effect: non-scaling-stroke; }
+.route-track.is-active { stroke-dasharray: 6 9; animation: route-dash 8s linear infinite; }
+.route-node { fill: var(--navy); stroke: #63d9e8; stroke-width: 2.5; filter: drop-shadow(0 0 7px rgba(99,217,232,.55)); vector-effect: non-scaling-stroke; }
+.route-node--sp { stroke: #b5caff; }
 .route-node.is-active { fill: var(--cyan); stroke: #dffcff; }
+.map-city-leader { fill: none; stroke: rgba(255,255,255,.65); stroke-width: 1; vector-effect: non-scaling-stroke; }
+.map-city { font-family: 'Manrope', sans-serif; paint-order: stroke; stroke: rgba(10,16,32,.85); stroke-width: 3px; stroke-linejoin: round; }
+.map-city__code { fill: #63d9e8; stroke-width: 2.5px; font-size: 8px; font-weight: 800; letter-spacing: 1.2px; }
+.map-city__name { fill: #f6f8fc; font-family: var(--serif); stroke-width: 3px; font-size: 15px; }
 .route-parcel rect { fill: #63d9e8; stroke: #e4fcff; stroke-width: 1.2; }
 .route-parcel path { fill: none; stroke: var(--navy); stroke-width: 1.3; stroke-linecap: round; stroke-linejoin: round; }
 .route-label { font-family: 'Manrope', sans-serif; }
@@ -92,14 +103,19 @@ h1, h2, h3, h4, p { margin-top: 0; }
 .route-label__sub { fill: #99aec8; font-size: 10px; }
 .route-note { display: flex; align-items: flex-start; gap: 13px; max-width: 350px; margin: -2px 0 0 auto; color: #9bacbf; font-size: 10px; line-height: 1.6; }
 .route-note__index { color: #63d9e8; font-size: 8px; font-weight: 800; letter-spacing: .1em; white-space: nowrap; }
+.route-note a { color: inherit; text-decoration-color: rgba(99,217,232,.55); text-underline-offset: 2px; }
 .route-visual--compact { max-width: 540px; align-self: center; }
 .route-visual--compact .route-map { max-height: 360px; }
 .route-visual--compact .route-note { color: #58667c; }
-.route-visual--compact .map-shape { fill: rgba(40,85,126,.05); stroke: rgba(45,112,159,.35); }
-.route-visual--compact .map-grid { color: #73aac6; }
-.route-visual--compact .route-label__main { fill: #17212b; }
-.route-visual--compact .route-label__sub { fill: #65748a; }
-.route-visual--compact .route-node { fill: #f6f8fc; }
+.route-visual--compact .brazil-state { fill: rgba(75,108,148,.08); stroke: rgba(45,92,130,.48); }
+.route-visual--compact .brazil-state--ro { fill: rgba(55,174,194,.35); stroke: #287f91; }
+.route-visual--compact .brazil-state--sp { fill: rgba(91,140,255,.35); stroke: #4168aa; }
+.route-visual--compact .map-city { stroke: rgba(255,255,255,.95); }
+.route-visual--compact .map-city__code { fill: #167d91; }
+.route-visual--compact .map-city__name { fill: #17212b; }
+.route-visual--compact .map-city-leader { stroke: rgba(31,61,91,.65); }
+.route-visual--compact .route-track { stroke: #19879a; }
+.route-visual--compact .route-node { fill: #f6f8fc; stroke: #17869a; }
 .route-visual--compact .route-parcel rect { fill: #5b8cff; }
 .route-visual--compact .route-parcel path { stroke: #fff; }
 
@@ -216,6 +232,7 @@ h1, h2, h3, h4, p { margin-top: 0; }
 .field--wide { max-width: 440px; }
 .field > input, .field__control { width: 100%; min-height: 46px; }
 .field--wide > input { padding: 0 14px 0 38px; color: #17212b; background: #f8fafc; border: 1px solid #d8e0e9; border-radius: 3px; font-size: 16px; font-variant-numeric: tabular-nums; }
+.field--wide > .range-control--amount { min-height: 30px; padding: 0; background: transparent; border: 0; }
 .field__unit { position: absolute; top: 36px; left: 14px; color: #657287; font-size: 12px; }
 .field small { color: #768499; font-size: 9px; font-weight: 500; line-height: 1.5; }
 .field .field__error { color: #ad443d; font-weight: 700; }
@@ -224,7 +241,7 @@ h1, h2, h3, h4, p { margin-top: 0; }
 .field__control input { width: 100%; height: 44px; padding: 0 12px; color: #17212b; background: transparent; border: 0; outline: none; font-size: 15px; font-variant-numeric: tabular-nums; }
 .field__control input:focus-visible { outline: 3px solid #5b8cff; outline-offset: -3px; }
 .field__control > span { padding: 0 13px; color: #66748a; font-size: 12px; }
-.range-control { width: 100%; height: 18px; accent-color: #386bc3; cursor: pointer; }
+.range-control { width: 100%; min-height: 30px; accent-color: #386bc3; cursor: pointer; touch-action: pan-y; }
 .field--select { max-width: 440px; margin-top: 3px; }
 .field--select select { min-height: 43px; padding: 0 12px; color: #27384d; background: #f8fafc; border: 1px solid #d8e0e9; border-radius: 3px; font-size: 11px; }
 .calculator__actions { display: flex; align-items: center; gap: 18px; flex-wrap: wrap; margin-top: 26px; }

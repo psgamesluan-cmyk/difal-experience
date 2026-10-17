@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { calculateIllustrativeDifal, formatCurrency, formatRate, type RecipientKind } from '../lib/difal'
 
 const example = { value: '1000', interstate: '12', destination: '20' }
@@ -6,13 +6,20 @@ const currencyInput = new Intl.NumberFormat('pt-BR', { style: 'currency', curren
 
 export function DifalCalculator() {
   const [value, setValue] = useState(example.value)
+  const [isValueFocused, setIsValueFocused] = useState(false)
+  const valueInputRef = useRef<HTMLInputElement>(null)
   const [interstateRate, setInterstateRate] = useState(example.interstate)
   const [destinationRate, setDestinationRate] = useState(example.destination)
   const [recipient, setRecipient] = useState<RecipientKind>('nonTaxpayer')
   const [showSteps, setShowSteps] = useState(false)
 
   const parsed = useMemo(() => {
-    const operationValue = Number(value)
+    const normalizedValue = value.trim().replace(/\s|R\$/g, '')
+    const hasBrazilianDecimal = normalizedValue.includes(',')
+    const isBrazilianGroupedInteger = /^\d{1,3}(\.\d{3})+$/.test(normalizedValue)
+    const operationValue = Number(hasBrazilianDecimal
+      ? normalizedValue.replace(/\./g, '').replace(',', '.')
+      : isBrazilianGroupedInteger ? normalizedValue.replace(/\./g, '') : normalizedValue)
     const interstate = Number(interstateRate)
     const destination = Number(destinationRate)
     const validValue = value.trim() !== '' && Number.isFinite(operationValue) && operationValue > 0 && operationValue <= 2_000_000
@@ -35,6 +42,12 @@ export function DifalCalculator() {
     : null
   const hasNegativeDifference = result !== null && result.rateDifference < 0
   const amount = result?.illustrativeAmount
+  const sliderValue = Number.isFinite(parsed.operationValue) ? Math.min(2_000_000, Math.max(0, parsed.operationValue)) : 0
+  const displayValue = !isValueFocused && parsed.validValue ? currencyInput.format(parsed.operationValue).replace(/^R\$\s?/, '') : value
+
+  useEffect(() => {
+    if (isValueFocused) valueInputRef.current?.select()
+  }, [isValueFocused])
   const restoreExample = () => {
     setValue(example.value)
     setInterstateRate(example.interstate)
@@ -45,14 +58,14 @@ export function DifalCalculator() {
     <div className="calculator" aria-label="Calculadora didática ilustrativa">
       <div className="calculator__inputs">
         <div className="calculator__topline"><span className="eyebrow">SIMULAÇÃO DIDÁTICA</span><span className="calculator__limits">Limites dos campos: 0–40% · até R$ 2.000.000</span></div>
-        <label className="field field--wide" htmlFor="operation-value">
+        <div className="field field--wide">
           <span>Valor assumido da operação</span>
           <span className="field__unit">R$</span>
-          <input id="operation-value" inputMode="decimal" type="number" min="0.01" max="2000000" step="0.01" value={value} onChange={(event) => setValue(event.target.value)} aria-describedby="value-hint value-error" />
+          <input ref={valueInputRef} id="operation-value" inputMode="decimal" type="text" autoComplete="off" value={displayValue} onFocus={() => setIsValueFocused(true)} onBlur={() => setIsValueFocused(false)} onChange={(event) => setValue(event.target.value)} aria-label="Valor assumido da operação em reais" aria-invalid={!parsed.validValue} aria-describedby="value-hint value-error" />
           <small id="value-hint">Hipótese simplificada de base de cálculo.</small>
-          <input className="range-control range-control--amount" aria-label="Ajustar valor assumido da operação" type="range" min="0.01" max="2000000" step="0.01" value={parsed.validValue ? parsed.operationValue : 0.01} onChange={(event) => setValue(event.target.value)} />
+          <input className="range-control range-control--amount" aria-label="Ajustar valor assumido da operação em passos de R$ 1.000" type="range" min="0" max="2000000" step="1000" value={sliderValue} onChange={(event) => setValue(event.target.value)} />
           {!parsed.validValue && <small className="field__error" id="value-error" role="alert">Informe um valor maior que zero e até R$ 2.000.000.</small>}
-        </label>
+        </div>
         <div className="rate-fields">
           <label className="field" htmlFor="interstate-rate">
             <span>Alíquota interestadual</span>

@@ -37,6 +37,7 @@ export function App() {
   const [isPresentationMode, setIsPresentationMode] = useState(false)
   const [isFullscreen, setIsFullscreen] = useState(false)
   const [selectedParticipant, setSelectedParticipant] = useState<keyof typeof participantCopy>('origin')
+  const [routeDirection, setRouteDirection] = useState<'sp-ro' | 'ro-sp'>('sp-ro')
   const [operationType, setOperationType] = useState<'internal' | 'interstate'>('interstate')
   const [recipient, setRecipient] = useState<RecipientKind>('nonTaxpayer')
   const [selectedRole, setSelectedRole] = useState<'seller' | 'buyer'>('seller')
@@ -125,7 +126,13 @@ export function App() {
               <p className="hero__subhead">Entenda o diferencial de alíquotas, a responsabilidade pelo recolhimento e o caminho do ICMS entre os estados.</p>
               <div className="hero__actions"><a className="button button--hero" href="#conceito">Explorar o conteúdo <ArrowIcon /></a><span className="hero__aside">APRESENTAÇÃO INTERATIVA<br />COM ESTUDO DE CASO E QUIZ</span></div>
             </div>
-            <div className="hero__visual"><RouteDiagram /></div>
+            <div className="hero__visual">
+              <div className="route-direction-control" role="group" aria-label="Direção da operação interestadual">
+                <button type="button" aria-pressed={routeDirection === 'sp-ro'} onClick={() => setRouteDirection('sp-ro')}>SP <span aria-hidden="true">→</span> RO</button>
+                <button type="button" aria-pressed={routeDirection === 'ro-sp'} onClick={() => setRouteDirection('ro-sp')}>RO <span aria-hidden="true">→</span> SP</button>
+              </div>
+              <RouteDiagram direction={routeDirection} />
+            </div>
           </div>
           <div className="hero__foot"><span>01 — 09</span><span>UM PERCURSO PELO DIFERENCIAL DE ALÍQUOTAS</span><a href="#conceito" aria-label="Rolar para o primeiro capítulo">↓</a></div>
         </section>
@@ -148,7 +155,7 @@ export function App() {
         <ChapterFrame id="por-que" number="02" label="O CONTEXTO" title="Quem recebe o ICMS quando a venda cruza um estado?" intro="A Emenda Constitucional nº 87/2015 alterou a sistemática das operações interestaduais destinadas a consumidor final, contribuinte ou não contribuinte do imposto." tone="mist">
           <div className="why-layout"><div className="why-copy"><p>A mudança buscou considerar o estado de destino nas operações interestaduais com consumidor final. Antes da EC nº 87/2015, a sistemática constitucional era diferente nas operações destinadas a quem não era contribuinte. A emenda ampliou o alcance do diferencial para esses cenários, respeitada a evolução legislativa e jurisprudencial.</p><p>O crescimento do comércio eletrônico tornou as vendas entre estados mais visíveis, mas não foi o único elemento por trás da mudança. O ponto central é a repartição do imposto entre origem e destino nas operações abrangidas.</p><div className="quote-callout"><span>IDEIA-CHAVE</span><p>Não se trata de dizer que o destino recebe todo o ICMS da venda. A alíquota interestadual e o diferencial seguem papéis distintos definidos pela Constituição.</p></div>
               <div className="participant-selector" role="group" aria-label="Explore as partes do fluxo"><span className="eyebrow">EXPLORE O FLUXO</span><div className="segmented-control">{(['origin', 'goods', 'destination'] as const).map((key) => <button key={key} type="button" className={selectedParticipant === key ? 'is-selected' : ''} aria-pressed={selectedParticipant === key} onClick={() => setSelectedParticipant(key)}>{key === 'origin' ? 'Origem' : key === 'goods' ? 'Mercadoria' : 'Destino'}</button>)}</div><p className="participant-explanation"><strong>{participantCopy[selectedParticipant].title}</strong>{participantCopy[selectedParticipant].body}</p></div>
-            </div><RouteDiagram compact emphasized={selectedParticipant === 'goods' ? 'flow' : selectedParticipant} /></div>
+            </div><RouteDiagram compact direction={routeDirection} emphasized={selectedParticipant === 'goods' ? 'flow' : selectedParticipant} /></div>
         </ChapterFrame>
 
         <ChapterFrame id="operacoes" number="03" label="O TIPO DE OPERAÇÃO" title="Quando uma operação é interestadual?" intro="A origem e o destino fiscal importam. A distância percorrida pela mercadoria não é, sozinha, o critério que resolve o tratamento tributário." >
