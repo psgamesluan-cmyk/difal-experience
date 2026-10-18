@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { CaseStudy } from './components/CaseStudy'
+import { CalculationForms } from './components/CalculationForms'
 import { ChapterFrame } from './components/ChapterFrame'
-import { DifalCalculator } from './components/DifalCalculator'
 import { Quiz } from './components/Quiz'
 import { RouteDiagram } from './components/RouteDiagram'
 import type { RecipientKind } from './lib/difal'
@@ -12,7 +12,7 @@ const chapters = [
   { id: 'operacoes', label: 'Operações', short: '03' },
   { id: 'destinatario', label: 'Destinatário', short: '04' },
   { id: 'responsabilidade', label: 'Responsabilidade', short: '05' },
-  { id: 'calculadora', label: 'Calculadora', short: '06' },
+  { id: 'formas-calculo', label: 'Formas de cálculo', short: '06' },
   { id: 'caso-pratico', label: 'Caso prático', short: '07' },
   { id: 'quiz', label: 'Quiz', short: '08' },
   { id: 'fontes', label: 'Fontes', short: '09' },
@@ -177,8 +177,8 @@ export function App() {
           <p className="chapter-footnote">A responsabilidade pelo diferencial não equivale à responsabilidade por todos os tributos, deveres fiscais ou custos envolvidos na venda.</p>
         </ChapterFrame>
 
-        <ChapterFrame id="calculadora" number="06" label="TRIAGEM DA OPERAÇÃO" title="Confira se há regra para calcular." intro="Identifique a operação e os dados fiscais disponíveis. Quando faltar validação suficiente, a ferramenta explica a pendência e não estima um valor de recolhimento." tone="mist">
-          <DifalCalculator />
+        <ChapterFrame id="formas-calculo" number="06" label="TRÊS FORMAS DE CÁLCULO" title="Três formas de cálculo do DIFAL." tone="mist">
+          <CalculationForms />
         </ChapterFrame>
 
         <ChapterFrame id="caso-pratico" number="07" label="APLICAÇÃO PRÁTICA" title="Do pedido ao recolhimento." intro="Compare quatro trajetórias, veja quais referências federais podem ser identificadas e percorra as verificações que antecedem uma apuração confiável." >
@@ -189,7 +189,7 @@ export function App() {
           <Quiz onGoContent={() => goToChapter('conceito')} />
         </ChapterFrame>
 
-        <ChapterFrame id="fontes" number="09" label="PARA CONTINUAR" title="Fundamentação legal e fontes de consulta." intro="Fontes oficiais consultadas para a auditoria. Cada referência tem escopo e vigência; nenhuma, isoladamente, valida todos os cenários da calculadora." tone="mist">
+        <ChapterFrame id="fontes" number="09" label="PARA CONTINUAR" title="Fundamentação legal e fontes de consulta." intro="Fontes oficiais consultadas para este material. Cada referência tem escopo e vigência; nenhuma, isoladamente, valida todos os cenários." tone="mist">
           <div className="source-list">
             <article className="source-item"><span className="source-item__type">LEGISLAÇÃO</span><div><h3>Constituição da República Federativa do Brasil de 1988</h3><p>Art. 155, § 2º, VII e VIII: operações destinadas a consumidor final localizado em outro estado e responsabilidade pelo diferencial.</p></div><a href="https://www.planalto.gov.br/ccivil_03/constituicao/constituicaocompilado.htm" target="_blank" rel="noreferrer" aria-label="Abrir Constituição Federal compilada no Portal do Planalto">Abrir fonte <ArrowIcon /></a></article>
             <article className="source-item"><span className="source-item__type">LEGISLAÇÃO</span><div><h3>Emenda Constitucional nº 87, de 16 de abril de 2015</h3><p>Alterou o art. 155 da Constituição e estabeleceu a sistemática para operações e prestações interestaduais destinadas a consumidor final, contribuinte ou não.</p></div><a href="https://www.planalto.gov.br/ccivil_03/constituicao/emendas/emc/emc87.htm" target="_blank" rel="noreferrer" aria-label="Abrir Emenda Constitucional 87 de 2015 no Portal do Planalto">Abrir fonte <ArrowIcon /></a></article>

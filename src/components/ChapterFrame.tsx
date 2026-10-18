@@ -5,7 +5,7 @@ interface ChapterFrameProps {
   number: string
   label: string
   title: string
-  intro: string
+  intro?: string
   children: ReactNode
   tone?: 'light' | 'dark' | 'mist'
   className?: string
@@ -27,7 +27,7 @@ export function ChapterFrame({
         <header className="chapter__heading">
           <div className="chapter__kicker"><span>{number}</span><span className="chapter__rule" /><span>{label}</span></div>
           <h2 id={`${id}-title`}>{title}</h2>
-          <p className="chapter__intro">{intro}</p>
+          {intro && <p className="chapter__intro">{intro}</p>}
         </header>
         <div className="chapter__content">{children}</div>
       </div>

@@ -1,6 +1,6 @@
 # DIFAL Experience
 
-Apresentação educacional interativa sobre o Diferencial de Alíquotas do ICMS, com nove capítulos, diagramas, calculadora didática, estudo de caso e quiz.
+Apresentação educacional interativa sobre o Diferencial de Alíquotas do ICMS, com nove capítulos, diagramas, três referências tabulares de cálculo, estudo de caso e quiz.
 
 ## Executar localmente
 

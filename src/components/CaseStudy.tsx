@@ -22,10 +22,10 @@ const workflow = [
 ]
 
 export function CaseStudy({ onReviewConcept, onGoQuiz }: CaseStudyProps) {
-  const [selected, setSelected] = useState(CASE_STUDY_PATHWAYS[1]!.id)
+  const [selected, setSelected] = useState(CASE_STUDY_PATHWAYS[2]!.id)
   const [operationDate, setOperationDate] = useState('2026-10-17')
   const [goodsOrigin, setGoodsOrigin] = useState<GoodsOrigin>('domestic')
-  const resolution = resolveCaseStudyPathway(selected, operationDate, goodsOrigin) ?? resolveCaseStudyPathway(CASE_STUDY_PATHWAYS[1]!.id, operationDate, goodsOrigin)!
+  const resolution = resolveCaseStudyPathway(selected, operationDate, goodsOrigin) ?? resolveCaseStudyPathway(CASE_STUDY_PATHWAYS[2]!.id, operationDate, goodsOrigin)!
   const { pathway: current, interstate, internal, fund, base, responsibility } = resolution
   const formattedOperationDate = operationDate ? new Date(`${operationDate}T12:00:00`).toLocaleDateString('pt-BR') : 'Não informada'
 
