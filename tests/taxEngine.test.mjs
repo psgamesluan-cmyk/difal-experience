@@ -52,7 +52,7 @@ test('não seleciona silenciosamente 4% para importados sem verificar critérios
   const result = selectInterstateReference('SP', 'RO', '2026-10-17', 'imported')
   assert.equal(result?.rate, null)
   assert.equal(result?.rule?.status, 'validated')
-  assert.match(result?.note ?? '', /Conteúdo de Importação/)
+  assert.match(result?.note ?? '', /conteúdo de importação/i)
 })
 
 test('mercadoria de origem desconhecida deixa a referência interestadual pendente', () => {
@@ -80,23 +80,23 @@ test('usa centavos inteiros para ler valores em português sem arredondamento bi
 
 test('não calcula DIFAL nem FCP mesmo quando há uma referência federal de alíquota', () => {
   const result = evaluateTaxScenario(scenario())
-  assert.equal(result.status, 'not-supported')
+  assert.equal(result.status, 'pending')
   assert.equal(result.calculation, null)
   assert.equal(result.interstateReference?.rate, '7%')
-  assert.match(result.title, /não suportado/)
+  assert.match(result.title, /falta validar a base/)
 })
 
 test('registra frete, seguro e IPI sem somá-los a uma base presumida', () => {
   const result = evaluateTaxScenario(scenario({ freightCents: 5_000n, insuranceCents: 1_500n, ipiCents: 2_000n }))
   assert.equal(result.calculation, null)
-  assert.ok(result.alerts.some((alert) => alert.includes('não foram somados à base')))
+  assert.ok(result.alerts.some((alert) => alert.includes('documentação sobre quem contratou/pagou o frete')))
 })
 
 test('vendas a consumidor final contribuinte e não contribuinte não recebem a mesma apuração automática', async (context) => {
   for (const recipient of ['taxpayer', 'non-taxpayer']) {
     await context.test(recipient, () => {
       const result = evaluateTaxScenario(scenario({ recipient }))
-      assert.equal(result.status, 'not-supported')
+      assert.equal(result.status, 'pending')
       assert.equal(result.calculation, null)
     })
   }
@@ -104,13 +104,13 @@ test('vendas a consumidor final contribuinte e não contribuinte não recebem a 
 
 test('o regime de apuração desconhecido permanece explícito no resultado', () => {
   const result = evaluateTaxScenario(scenario({ taxRegime: 'unknown' }))
-  assert.ok(result.alerts.some((alert) => alert.includes('regime de apuração')))
+  assert.ok(result.alerts.some((alert) => alert.toLowerCase().includes('regime de apuração')))
   assert.equal(result.calculation, null)
 })
 
 test('exige identificação mínima e valores monetários válidos antes da triagem', () => {
   assert.equal(evaluateTaxScenario(scenario({ origin: '' })).status, 'invalid')
-  assert.equal(evaluateTaxScenario(scenario({ destination: 'SP' })).status, 'invalid')
+  assert.equal(evaluateTaxScenario(scenario({ destination: 'SP' })).status, 'not-applicable')
   assert.equal(evaluateTaxScenario(scenario({ productValueCents: null })).status, 'invalid')
   assert.equal(evaluateTaxScenario(scenario({ productValueCents: 0n })).status, 'invalid')
   assert.equal(evaluateTaxScenario(scenario({ freightCents: -1n })).status, 'invalid')
@@ -128,7 +128,7 @@ test('bloqueia automaticamente as finalidades de aquisição sem regras estaduai
   for (const purpose of ['use-consumption', 'fixed-assets', 'resale', 'industrialization', 'other']) {
     await context.test(purpose, () => {
       const result = evaluateTaxScenario(scenario({ scenario: 'taxpayer-acquisition', recipient: 'taxpayer', purpose }))
-      assert.equal(result.status, 'not-supported')
+      assert.equal(result.status, 'pending')
       assert.equal(result.calculation, null)
     })
   }
@@ -142,7 +142,7 @@ test('bloqueia automaticamente importados e tratamentos fiscais especiais', asyn
   ]) {
     await context.test(JSON.stringify(input), () => {
       const result = evaluateTaxScenario(scenario(input))
-      assert.equal(result.status, 'not-supported')
+      assert.equal(result.status, 'pending')
       assert.equal(result.calculation, null)
     })
   }
@@ -167,7 +167,7 @@ test('não aplica retroativamente a alíquota modal atual de Rondônia', () => {
 
 test('a falta de destino suportado não inventa alíquota interna estadual', () => {
   const result = evaluateTaxScenario(scenario({ origin: 'SP', destination: 'PA' }))
-  assert.equal(result.status, 'not-supported')
+  assert.equal(result.status, 'pending')
   assert.equal(result.interstateReference?.rate, '7%')
   assert.equal(result.sourceRuleIds.includes('SP-ICMS-18'), false)
   assert.equal(result.calculation, null)

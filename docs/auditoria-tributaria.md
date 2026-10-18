@@ -57,3 +57,11 @@ Se a mercadoria for importada ou tiver Conteúdo de Importação superior a 40%,
 Não são calculados automaticamente: qualquer valor final de DIFAL; operação envolvendo mercadoria sem NCM e classificação fiscal; alíquota interna de estado que não esteja versionada para produto/data; FECOEP/FCP; mercadorias importadas; benefícios, isenções, reduções, regimes especiais e substituição tributária; compras para revenda, industrialização, uso/consumo e ativo imobilizado; operação histórica fora da regra verificada; composição fiscal da base, crédito ou valor de imposto de origem; prazo, guia e obrigação acessória.
 
 O motor retorna `calculation: null` para esses casos. Nenhum percentual pendente, vencido ou apenas modal é usado para produzir silenciosamente um valor de recolhimento.
+
+## Complemento da auditoria da calculadora (17/10/2026)
+
+A causa de `Cenário não suportado para cálculo automático` foi a ausência de qualquer ramo de sucesso em `evaluateTaxScenario`; toda entrada válida era rejeitada com a mesma mensagem. O motor agora diferencia dados inválidos, operação interna não aplicável e cenário pendente com motivos por módulo. Não habilita cálculo final.
+
+A implementação e seu escopo, inclusive testes e limitações, estão detalhados em [auditoria-calculadora-nacional.md](./auditoria-calculadora-nacional.md). Foram acrescentadas referências residuais para RR e teste direcional RS→RR/RR→RS. A Lei estadual nº 59/1993, art. 32, I, “d”, com redação da Lei nº 1.767/2022, sustenta 20% para demais mercadorias e serviços em RR a partir de 30/03/2023; é regra residual, não confirmação para todos os produtos. [Lei nº 1.767/2022, SEFAZ/RR](https://www.sefaz.rr.gov.br/component/jdownloads/?Itemid=402&catid=1302&id=23597&m=0&task=download.send)
+
+A matriz técnica cobre 702 trajetórias distintas e 27 pares internos, mas apenas seleciona a regra federal condicional 7%/12% para mercadoria declarada nacional. Ela não atesta validação jurídica dos 702 pares para cada produto. Vinte e três alíquotas internas permanecem pendentes; FCP e a base também seguem pendentes. Nenhuma apuração monetária pode ser feita com segurança com o catálogo atual.
