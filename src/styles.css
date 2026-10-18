@@ -249,6 +249,19 @@ h1, h2, h3, h4, p { margin-top: 0; }
 .calculation-form__base-table th:first-child { width: 30%; color: #5685bd; background: #fffbdc; }
 .calculation-form__base-table th:not(:first-child), .calculation-form__base-table td { color: #843b3b; background: #fffbdc; }
 .calculation-form__base-table th:not(:first-child) { width: 35%; }
+.calculation-explainer { padding: clamp(20px,3.5vw,34px); color: #e7edf7; background: #101b30; border: 1px solid #283954; }
+.calculation-explainer > .eyebrow { color: #63d9e8; }
+.calculation-explainer h3 { margin: 8px 0 12px; color: #f6f8fc; font-family: var(--serif); font-size: clamp(27px,3.5vw,38px); font-weight: 400; line-height: 1.2; }
+.calculation-explainer__lead { max-width: 820px; margin: 0; color: #b7c4d8; font-size: 12px; line-height: 1.8; }
+.calculation-explainer__steps { display: grid; gap: 0; margin: 24px 0 0; padding: 0; list-style: none; counter-reset: difal-step; }
+.calculation-explainer__steps li { position: relative; padding: 18px 0 18px 34px; border-top: 1px solid #2d3b54; counter-increment: difal-step; }
+.calculation-explainer__steps li::before { position: absolute; top: 21px; left: 0; color: #63d9e8; font-size: 10px; font-weight: 800; content: counter(difal-step, decimal-leading-zero); }
+.calculation-explainer__steps h4 { margin: 0 0 6px; color: #f6f8fc; font-family: var(--serif); font-size: 20px; font-weight: 400; }
+.calculation-explainer__steps p { max-width: 850px; margin: 0; color: #b7c4d8; font-size: 10px; line-height: 1.75; }
+.calculation-explainer__formula { width: fit-content; max-width: 100%; margin: 13px 0; padding: 13px 17px; overflow-wrap: anywhere; color: #f6f8fc; background: #172641; border-left: 2px solid #63d9e8; font-family: Georgia,serif; font-size: clamp(18px,3vw,25px); line-height: 1.5; }
+.calculation-explainer__formula sub, .calculation-explainer__variables sub { font-size: .65em; }
+.calculation-explainer__steps .calculation-explainer__variables { max-width: 850px; color: #93a5bf; font-size: 9px; }
+.calculation-explainer__variables strong { color: #dce6f5; }
 @media (max-width: 760px) {
   .calculation-form { padding: 17px 13px; }
   .calculation-form__rates-table { min-width: 610px; }
@@ -257,6 +270,12 @@ h1, h2, h3, h4, p { margin-top: 0; }
   .calculation-form__matrix th, .calculation-form__matrix td { min-width: 31px; height: 25px; }
   .calculation-form__base-table { min-width: 610px; }
   .calculation-form__base-table th, .calculation-form__base-table td { height: 90px; padding: 12px; }
+  .calculation-explainer { padding: 20px 16px; }
+  .calculation-explainer__lead { font-size: 11px; }
+  .calculation-explainer__steps li { padding-left: 29px; }
+  .calculation-explainer__steps h4 { font-size: 18px; }
+  .calculation-explainer__steps p { font-size: 10px; }
+  .calculation-explainer__formula { width: 100%; padding: 11px 12px; font-size: clamp(16px,5vw,22px); }
 }
 .case-study { padding: clamp(25px,5vw,48px); background: #f4f7fb; border: 1px solid #e2e8f0; }
 .case-study__topline { display: flex; justify-content: space-between; gap: 15px; color: #6980a0; font-size: 8px; font-weight: 800; letter-spacing: .13em; }
