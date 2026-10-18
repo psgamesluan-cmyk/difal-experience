@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { CaseStudy } from './components/CaseStudy'
 import { CalculationForms } from './components/CalculationForms'
 import { ChapterFrame } from './components/ChapterFrame'
+import { FinalizationPage } from './components/FinalizationPage'
 import { Quiz } from './components/Quiz'
 import { RouteDiagram } from './components/RouteDiagram'
 import type { RecipientKind } from './lib/difal'
@@ -33,6 +34,16 @@ function PresentationIcon({ active }: { active: boolean }) {
 }
 
 export function App() {
+  const currentPath = window.location.pathname.replace(/\/+$/, '') || '/'
+  useEffect(() => {
+    document.title = currentPath === '/finalizacao'
+      ? 'Apresentação concluída | DIFAL Experience'
+      : 'DIFAL Experience | Apresentação interativa sobre DIFAL'
+  }, [currentPath])
+  return currentPath === '/finalizacao' ? <FinalizationPage /> : <PresentationExperience />
+}
+
+function PresentationExperience() {
   const [activeChapter, setActiveChapter] = useState('conceito')
   const [isPresentationMode, setIsPresentationMode] = useState(false)
   const [isFullscreen, setIsFullscreen] = useState(false)
@@ -206,6 +217,18 @@ export function App() {
           </div>
           <aside className="academic-note"><span className="eyebrow">NOTA ACADÊMICA</span><p>Este material tem finalidade educacional e não substitui a consulta à legislação vigente, à regulamentação estadual ou a uma análise tributária específica.</p></aside>
         </ChapterFrame>
+
+        <section className="closing-invitation" aria-labelledby="closing-invitation-title">
+          <div>
+            <span className="eyebrow">FIM DO PERCURSO</span>
+            <h2 id="closing-invitation-title">Pronto para concluir?</h2>
+            <p>Encerre a apresentação com uma última mensagem.</p>
+          </div>
+          <a className="button closing-invitation__button" href="/finalizacao">
+            Finalizar apresentação
+            <ArrowIcon />
+          </a>
+        </section>
       </main>
 
       <footer className="site-footer"><a className="brand brand--footer" href="#home"><span className="brand__mark">D</span><span className="brand__name">DIFAL<small>EXPERIENCE</small></span></a><p>Uma apresentação educacional interativa sobre o diferencial de alíquotas do ICMS.</p><span>CONTEÚDO ACADÊMICO · BRASIL</span></footer>
