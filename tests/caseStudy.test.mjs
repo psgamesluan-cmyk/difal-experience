@@ -30,19 +30,30 @@ test('São Paulo → Pará não recebe FECOEP/RO; a situação do FCP permanece 
   assert.equal(result.base.difalBaseCents, null)
 })
 
-test('São Paulo → Pará mantém a alíquota interna do destino pendente e distinta da interestadual', () => {
+test('São Paulo → Pará exibe 7% interestadual e 19% interno do Pará, com ressalva didática', () => {
   const spToPa = resolveCaseStudyPathway('sp-pa', '2026-10-17', 'domestic')
   const roToSp = resolveCaseStudyPathway('ro-sp', '2026-10-17', 'domestic')
   assert.ok(spToPa && roToSp)
   assert.equal(spToPa.pathway.destination, 'PA')
   assert.equal(roToSp.pathway.destination, 'SP')
   assert.equal(spToPa.interstate?.rate, '7%')
-  assert.equal(spToPa.internal.rate, null)
+  assert.equal(spToPa.internal.rate, '19%')
   assert.equal(spToPa.internal.status, 'pending')
+  assert.match(spToPa.internal.note, /validação por produto e hipótese continua pendente/)
+  assert.match(spToPa.internal.note, /distinta da alíquota interestadual de 7%/)
+  assert.match(spToPa.internal.note, /12 pontos percentuais/)
   assert.equal(roToSp.internal.rate, '18%')
   assert.equal(spToPa.fund.state, 'PA')
   assert.equal(roToSp.fund.state, 'SP')
   assert.notEqual(spToPa.interstate?.rate, spToPa.internal.rate)
+})
+
+test('São Paulo → Pará não reaproveita a referência didática de 19% para data posterior à revisão', () => {
+  const future = resolveCaseStudyPathway('sp-pa', '2027-01-01', 'domestic')
+  assert.ok(future)
+  assert.equal(future.interstate?.rate, null)
+  assert.equal(future.internal.rate, null)
+  assert.equal(future.internal.status, 'pending')
 })
 
 test('as alíquotas interestaduais seguem a direção legal e vinculam FECOEP apenas quando o destino é RO', () => {
