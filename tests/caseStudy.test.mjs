@@ -30,30 +30,53 @@ test('São Paulo → Pará não recebe FECOEP/RO; a situação do FCP permanece 
   assert.equal(result.base.difalBaseCents, null)
 })
 
-test('Pará → São Paulo atualiza imediatamente destino, alíquota interna e fundo', () => {
-  const paraToSp = resolveCaseStudyPathway('sp-pa', '2026-10-17', 'domestic')
-  const spToPara = resolveCaseStudyPathway('ro-sp', '2026-10-17', 'domestic')
-  assert.ok(paraToSp && spToPara)
-  assert.equal(paraToSp.pathway.destination, 'PA')
-  assert.equal(spToPara.pathway.destination, 'SP')
-  assert.equal(paraToSp.internal.rate, null)
-  assert.equal(spToPara.internal.rate, '18%')
-  assert.equal(paraToSp.fund.state, 'PA')
-  assert.equal(spToPara.fund.state, 'SP')
-  assert.notEqual(paraToSp.interstate?.rate, spToPara.interstate?.rate)
+test('São Paulo → Pará mantém a alíquota interna do destino pendente e distinta da interestadual', () => {
+  const spToPa = resolveCaseStudyPathway('sp-pa', '2026-10-17', 'domestic')
+  const roToSp = resolveCaseStudyPathway('ro-sp', '2026-10-17', 'domestic')
+  assert.ok(spToPa && roToSp)
+  assert.equal(spToPa.pathway.destination, 'PA')
+  assert.equal(roToSp.pathway.destination, 'SP')
+  assert.equal(spToPa.interstate?.rate, '7%')
+  assert.equal(spToPa.internal.rate, null)
+  assert.equal(spToPa.internal.status, 'pending')
+  assert.equal(roToSp.internal.rate, '18%')
+  assert.equal(spToPa.fund.state, 'PA')
+  assert.equal(roToSp.fund.state, 'SP')
+  assert.notEqual(spToPa.interstate?.rate, spToPa.internal.rate)
 })
 
-test('RO → SP e PR → RO usam origem e destino direcionais e vinculam FECOEP apenas quando o destino é RO', () => {
+test('as alíquotas interestaduais seguem a direção legal e vinculam FECOEP apenas quando o destino é RO', () => {
   const roToSp = resolveCaseStudyPathway('ro-sp', '2026-10-17', 'domestic')
+  const spToRo = resolveCaseStudyPathway('sp-ro', '2026-10-17', 'domestic')
   const prToRo = resolveCaseStudyPathway('pr-ro', '2026-10-17', 'domestic')
-  assert.ok(roToSp && prToRo)
+  assert.ok(roToSp && spToRo && prToRo)
   assert.equal(roToSp.interstate?.rate, '12%')
+  assert.equal(roToSp.interstate?.rule?.id, 'RSF-22-12')
+  assert.match(roToSp.interstate?.note ?? '', /referência federal geral de 12%/i)
+  assert.equal(spToRo.interstate?.rate, '7%')
+  assert.equal(spToRo.interstate?.rule?.id, 'RSF-22-7')
+  assert.match(spToRo.interstate?.note ?? '', /origem Sul\/Sudeste.*destino Norte/i)
   assert.equal(roToSp.internal.rate, '18%')
   assert.equal(roToSp.fund.fundName, null)
   assert.equal(prToRo.interstate?.rate, '7%')
   assert.equal(prToRo.internal.rate, '19.5%')
   assert.equal(prToRo.fund.fundName, 'FECOEP/RO')
   assert.equal(prToRo.fund.rate, '2%')
+})
+
+test('percorrer todas as trajetórias refaz alíquotas, estado de destino e fundo para cada seleção', () => {
+  const expectedRates = new Map([['ro-sp', '12%'], ['sp-ro', '7%'], ['sp-pa', '7%'], ['pr-ro', '7%']])
+  const resolved = CASE_STUDY_PATHWAYS.map(({ id }) => resolveCaseStudyPathway(id, '2026-10-17', 'domestic'))
+  assert.equal(resolved.length, 4)
+  resolved.forEach((result, index) => {
+    const pathway = CASE_STUDY_PATHWAYS[index]
+    assert.ok(pathway)
+    assert.ok(result)
+    assert.equal(result.pathway.id, pathway.id)
+    assert.equal(result.interstate?.rate, expectedRates.get(pathway.id))
+    assert.equal(result.internal.rule?.state, pathway.destination)
+    assert.equal(result.fund.state, pathway.destination)
+  })
 })
 
 test('troca de data e origem da mercadoria invalida/atualiza referências dependentes', () => {
