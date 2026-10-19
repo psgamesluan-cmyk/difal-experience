@@ -57,52 +57,68 @@ export function CalculationForms() {
       </section>
 
       <section className="calculation-explainer" aria-labelledby="difal-calculation-explainer-title">
-        <span className="eyebrow">COMO ENTENDER O CÁLCULO</span>
-        <h3 id="difal-calculation-explainer-title">A lógica do DIFAL por dentro</h3>
-        <p className="calculation-explainer__lead">
-          O método de base dupla organiza a comparação entre a tributação da origem e a do destino. A sequência abaixo explica a lógica; a modalidade e a fórmula aplicáveis precisam ser confirmadas para cada operação.
-        </p>
+        <span className="eyebrow">CÁLCULO · EXPLICAÇÃO DIDÁTICA</span>
+        <h3 id="difal-calculation-explainer-title">Como calcular o DIFAL</h3>
+        <p className="calculation-explainer__lead">O DIFAL (Diferencial de Alíquota do ICMS) é a diferença entre o ICMS calculado conforme a alíquota interna do estado de destino e a parcela correspondente à alíquota interestadual, observadas as regras aplicáveis à operação.</p>
+        <p className="calculation-explainer__lead">A forma de determinar a base de cálculo depende da natureza da operação e da legislação aplicável. Entre as metodologias estudadas estão a base única e a base dupla, também chamada de cálculo “por dentro”.</p>
 
-        <ol className="calculation-explainer__steps">
-          <li>
-            <h4>Identifique as alíquotas</h4>
-            <p>A alíquota interestadual corresponde à operação entre estados. A alíquota interna é a pertinente ao estado de destino. Os percentuais dependem da operação, do produto, da origem da mercadoria e da legislação vigente.</p>
-          </li>
-          <li>
-            <h4>Encontre o ICMS interestadual</h4>
-            <p>Identifique a base de origem prevista para o caso e aplique a alíquota interestadual correspondente. O ICMS destacado na nota documenta a operação, mas não deve ser confundido automaticamente com o valor final do DIFAL.</p>
-            <div className="calculation-explainer__formula" role="math" aria-label="ICMS interestadual é igual à base de origem aplicável multiplicada pela alíquota interestadual">
-              ICMS<sub>inter</sub> = B<sub>origem</sub> × a<sub>inter</sub>
-            </div>
-          </li>
-          <li>
-            <h4>Determine a primeira base</h4>
-            <p>A primeira base é formada conforme as regras da operação e representa o ponto de partida para identificar o imposto da origem. A forma como o ICMS de origem entra nessa base — ou é considerado na passagem para a base do destino — depende da metodologia legal aplicável.</p>
-          </li>
-          <li>
-            <h4>Entenda a formação “por dentro”</h4>
-            <p>Quando a regra determina que o próprio ICMS integre sua base, o imposto faz parte do valor sobre o qual sua alíquota incide. Por isso, não basta multiplicar diretamente o valor líquido inicial pela alíquota interna: é preciso encontrar a base que, depois de incluir o imposto, corresponda àquele valor líquido.</p>
-            <div className="calculation-explainer__formula" role="math" aria-label="Base por dentro é igual ao valor líquido dividido por um menos a alíquota interna, quando essa estrutura for a prevista">
-              B<sub>destino</sub> = V<sub>líquido</sub> ÷ (1 − a<sub>interna</sub>)
-            </div>
-            <p className="calculation-explainer__variables"><strong>Variáveis:</strong> B<sub>destino</sub> é a base do destino; V<sub>líquido</sub> é o valor de partida definido pela metodologia aplicável, após os ajustes legalmente previstos; a<sub>interna</sub> é a alíquota interna expressa em forma decimal. A divisão por (1 − a<sub>interna</sub>) mostra a inclusão do imposto na própria base. Esta relação algébrica ilustra o “gross-up”; não é uma fórmula universal de DIFAL.</p>
-          </li>
-          <li>
-            <h4>Calcule o ICMS interno do destino</h4>
-            <p>Com a base do destino definida segundo a regra aplicável, determine o ICMS interno correspondente usando a alíquota interna pertinente. A base e os ajustes precisam seguir a metodologia da hipótese analisada.</p>
-            <div className="calculation-explainer__formula" role="math" aria-label="ICMS interno de destino é igual à base de destino definida pela regra multiplicada pela alíquota interna">
-              ICMS<sub>destino</sub> = B<sub>destino</sub> × a<sub>interna</sub>
-            </div>
-          </li>
-          <li>
-            <h4>Apure a diferença</h4>
-            <p>O DIFAL é a diferença tributária determinada pelas regras daquela operação, considerando as bases e os valores pertinentes. Só se comparam parcelas calculadas de forma compatível com a mesma metodologia legal; não se deve subtrair quaisquer dois valores de ICMS sem essa conferência.</p>
-          </li>
-          <li>
-            <h4>Confira o que pode alterar a apuração</h4>
-            <p>Tipo de destinatário e finalidade da aquisição, classificação do produto, composição da base, benefícios fiscais, eventual FCP e legislação vigente podem mudar o tratamento. Base dupla não é obrigatória em toda operação: confirme primeiro qual hipótese e metodologia se aplicam.</p>
-          </li>
-        </ol>
+        <section className="calculation-explainer__topic" aria-labelledby="difal-base-title">
+          <h4 id="difal-base-title">1. Composição da base de cálculo</h4>
+          <p>Como ponto de partida, a base de cálculo considera o valor da operação e os componentes que a legislação determina incluir.</p>
+          <div className="calculation-explainer__formula" role="math" aria-label="Base de referência é o valor da mercadoria mais frete, seguro e despesas acessórias, menos descontos incondicionais, observadas as regras legais aplicáveis.">Base de referência = valor da mercadoria + frete + seguro + despesas acessórias − descontos incondicionais, observadas as regras legais aplicáveis.</div>
+          <p>O IPI, o ICMS e outros componentes devem ser tratados conforme a natureza da operação e as normas aplicáveis. Não se deve incluir ou excluir um componente automaticamente sem verificar a hipótese tributária correspondente.</p>
+        </section>
+
+        <section className="calculation-explainer__topic" aria-labelledby="difal-method-a-title">
+          <h4 id="difal-method-a-title">2. Método A — Base única</h4>
+          <p>Nesse exemplo didático, utiliza-se o mesmo valor de operação como base para as duas alíquotas, calculando a diferença entre elas.</p>
+          <p><strong>Dados do exemplo:</strong></p>
+          <ul className="calculation-explainer__data"><li>Valor da operação: R$ 1.000,00</li><li>Alíquota interestadual: 12%</li><li>Alíquota interna do destino: 18%</li></ul>
+          <h5>Passo 1 — Calcular a diferença entre as alíquotas</h5>
+          <div className="calculation-explainer__formula" role="math" aria-label="18 por cento menos 12 por cento é igual a 6 por cento">18% − 12% = 6%</div>
+          <h5>Passo 2 — Aplicar a diferença à base de cálculo</h5>
+          <div className="calculation-explainer__formula" role="math" aria-label="DIFAL é 1.000 reais vezes 6 por cento, ou 1.000 reais vezes 0,06">DIFAL = R$ 1.000,00 × 6%<br />DIFAL = R$ 1.000,00 × 0,06</div>
+          <p className="calculation-explainer__result">Resultado ilustrativo: <strong>R$ 60,00.</strong></p>
+          <p>Esse resultado corresponde à fórmula simplificada de base única apresentada no exemplo. Para aplicá-la a uma operação real, é necessário confirmar se a metodologia é juridicamente adequada à operação e ao estado de destino.</p>
+        </section>
+
+        <section className="calculation-explainer__topic" aria-labelledby="difal-method-b-title">
+          <h4 id="difal-method-b-title">3. Método B — Base dupla ou cálculo “por dentro”</h4>
+          <p>No cálculo por dentro, o ICMS integra sua própria base de cálculo, conforme a metodologia legal aplicável. Por isso, a base utilizada para o imposto do destino pode ser diferente do valor inicial da operação.</p>
+          <p>Para demonstrar a matemática, utilizaremos os mesmos valores:</p>
+          <ul className="calculation-explainer__data"><li>Valor da operação: R$ 1.000,00</li><li>Alíquota interestadual: 12%</li><li>Alíquota interna do destino: 18%</li></ul>
+          <h5>Passo 1 — Calcular o ICMS interestadual</h5>
+          <div className="calculation-explainer__formula" role="math" aria-label="ICMS interestadual é o valor da operação vezes a alíquota interestadual: mil reais vezes doze por cento, igual a cento e vinte reais.">ICMS interestadual = valor da operação × alíquota interestadual<br />ICMS interestadual = R$ 1.000,00 × 12%<br />ICMS interestadual = R$ 120,00.</div>
+          <h5>Passo 2 — Determinar a base ajustada</h5>
+          <p>Para este exemplo didático, utilizaremos a fórmula:</p>
+          <div className="calculation-explainer__formula" role="math" aria-label="Base ajustada é valor da operação menos ICMS interestadual, dividido por um menos alíquota interna do destino.">Base ajustada = (valor da operação − ICMS interestadual) ÷ (1 − alíquota interna do destino)<br />Base ajustada = (R$ 1.000,00 − R$ 120,00) ÷ (1 − 0,18)<br />Base ajustada = R$ 880,00 ÷ 0,82<br />Base ajustada ≈ R$ 1.073,17.</div>
+          <h5>Passo 3 — Calcular o ICMS total do destino</h5>
+          <div className="calculation-explainer__formula" role="math" aria-label="ICMS do destino é a base ajustada vezes a alíquota interna: 1.073 reais e 17 centavos vezes 18 por cento, aproximadamente 193 reais e 17 centavos.">ICMS do destino = base ajustada × alíquota interna<br />ICMS do destino = R$ 1.073,17 × 18%<br />ICMS do destino ≈ R$ 193,17.</div>
+          <h5>Passo 4 — Calcular a diferença</h5>
+          <div className="calculation-explainer__formula" role="math" aria-label="DIFAL ilustrativo é ICMS do destino menos ICMS interestadual: 193 reais e 17 centavos menos 120 reais.">DIFAL ilustrativo = ICMS do destino − ICMS interestadual<br />DIFAL ilustrativo = R$ 193,17 − R$ 120,00</div>
+          <p className="calculation-explainer__result">Resultado ilustrativo: <strong>R$ 73,17.</strong></p>
+          <p>Esse resultado demonstra a aplicação matemática da fórmula descrita. A fórmula e a forma de determinar a base devem ser confirmadas para a hipótese tributária específica antes de tratar o resultado como valor efetivamente devido.</p>
+        </section>
+
+        <section className="calculation-explainer__topic" aria-labelledby="difal-rates-title">
+          <h4 id="difal-rates-title">4. Alíquotas interestaduais</h4>
+          <p>As alíquotas interestaduais dependem da origem, do destino, da natureza da mercadoria e das regras legais aplicáveis.</p>
+          <p>Como referências gerais:</p>
+          <ul className="calculation-explainer__data"><li>7%: aplica-se a determinadas operações originadas nas regiões Sul e Sudeste, ressalvado o Espírito Santo, destinadas às regiões Norte, Nordeste e Centro-Oeste e ao Espírito Santo.</li><li>12%: aplica-se às demais operações abrangidas pela regra geral, observadas as exceções.</li><li>4%: pode aplicar-se a determinadas operações interestaduais com mercadorias importadas ou que atendam aos critérios legais relativos ao conteúdo de importação, observadas as exceções previstas na legislação.</li></ul>
+          <p>Essas alíquotas não devem ser escolhidas apenas com base no nome dos estados. É necessário verificar a direção da operação e as condições previstas nas normas pertinentes.</p>
+        </section>
+
+        <section className="calculation-explainer__topic" aria-labelledby="difal-fcp-title">
+          <h4 id="difal-fcp-title">5. E o FCP?</h4>
+          <p>O Fundo de Combate à Pobreza (FCP), quando previsto e aplicável, deve ser analisado separadamente conforme a legislação do estado pertinente, o produto e a operação.</p>
+          <p>A alíquota, a base, a incidência e a forma de recolhimento não são necessariamente iguais em todos os estados. Por isso, não se deve adicionar automaticamente 1% ou 2% ao cálculo sem verificar a regra específica.</p>
+        </section>
+
+        <section className="calculation-explainer__topic calculation-explainer__conclusion" aria-labelledby="difal-conclusion-title">
+          <h4 id="difal-conclusion-title">Conclusão</h4>
+          <p>A diferença entre os dois exemplos está na metodologia utilizada para determinar a base e calcular o imposto. Na demonstração de base única, a diferença de 6 pontos percentuais aplicada a R$ 1.000,00 resulta em R$ 60,00. Na demonstração de base dupla apresentada, a fórmula gera um resultado aproximado de R$ 73,17.</p>
+          <p>Os dois resultados são exemplos matemáticos didáticos, e não uma afirmação de que ambas as metodologias podem ser escolhidas livremente para qualquer operação. A legislação aplicável determina qual metodologia deve ser utilizada em cada caso.</p>
+        </section>
       </section>
     </div>
   )
